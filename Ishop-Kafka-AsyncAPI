@@ -1,0 +1,226 @@
+asyncapi: '2.6.0'
+id: 'urn:my_async_producer_app:server'
+info:
+  title: Async API specification for Kafka
+  version: '1.0.0'
+  description: 'Спецификация асинхронного обмена данными через Kafka'
+
+servers:
+  dev:
+    url: my-kafka.upstash.io:9092
+    protocol: kafka-secure
+    description: 'параметры брокера Kafka'
+    security:
+      - saslScram: [SCRAM-SHA-256]
+
+defaultContentType: application/json
+
+channels:
+  publishing.{eventId}:
+    description: приложение-продюсер
+    parameters:
+      eventId:
+        $ref: '#/components/parameters/eventId'
+    publish:
+      summary: 'Генерация события, отправляемого с клиентского приложения'
+      operationId: PublishNewEvent
+      traits:
+        - $ref: '#/components/operationTraits/kafka'
+      message:
+        oneOf:
+          - $ref: '#/components/messages/question'
+          - $ref: '#/components/messages/ind_app'
+          - $ref: '#/components/messages/corp_app'
+    bindings:
+      kafka:
+        key:
+          type: string
+          enum: ['question', 'ind_app', 'corp_app']
+  
+  questions:
+    description: 'раздел для вопросов'
+    subscribe:
+      operationId: questions_performing
+      traits:
+        - $ref: '#/components/operationTraits/kafka'
+      message:
+        $ref: '#/components/messages/question'
+
+  ind_apps:
+    description: 'раздел для индивидуальных заявок'
+    subscribe:
+      operationId: ind_apps_performing
+      traits:
+        - $ref: '#/components/operationTraits/kafka'
+      message:
+        $ref: '#/components/messages/ind_app'
+
+  corp_apps:
+    description: 'раздел для корпоративных заявок'
+    subscribe:
+      operationId: corp_apps_performing
+      traits:
+        - $ref: '#/components/operationTraits/kafka'
+      message:
+        $ref: '#/components/messages/corp_app'
+
+components:
+  messages:
+    question:
+      name: question
+      title: question
+      summary: 'в раздел 0 попадают все вопросы'
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/question_header'
+      payload:
+        $ref: "#/components/schemas/question"
+    ind_app:
+      name: ind_app
+      title: ind_app
+      summary: 'в раздел 1 попадают все индивидуальные заявки'
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/ind_app_header'
+      payload:
+        $ref: "#/components/schemas/ind_app"
+    corp_app:
+      name: corp_app
+      title: corp_app
+      summary: 'в раздел 1 попадают корпоративные заявки'
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/corp_app_header'
+      payload:
+        $ref: "#/components/schemas/corp_app"    
+
+  schemas:
+    question:
+      type: object
+      description: 'вопрос по работе магазина'
+      properties:
+        id:
+          type: string
+          description: 'q-x-xx-xx-xxxx'
+        name:
+          type: string
+        subject:
+          type: string
+        content:
+          type: string
+        sentAt:
+          $ref: "#/components/schemas/sentAt"
+    ind_app:
+      type: object
+      description: 'индивидуальная заявка на покупку продукта'
+      properties:
+        id:
+          type: string
+          description: 'ia-x-xx-xxx-xxx'
+        client_name:
+          type: string
+        subject:
+          type: string
+        content:
+          type: object
+          properties:
+            product:
+              type: string
+              $ref: "#/components/schemas/products"
+            quantity:
+              type: integer
+    corp_app:
+      type: object
+      description: 'корпоративная заявка на покупку продукта'
+      properties:
+        id:
+          type: string
+          description: 'ca-x-xx-xxx-xxx'
+        company_name:
+          type: string
+        subject:
+          type: string
+        content:
+          type: object
+          properties:
+            product:
+              type: string
+              $ref: "#/components/schemas/products"
+            quantity:
+              type: integer            
+        sentAt:
+          $ref: "#/components/schemas/sentAt"      
+    sentAt:
+      type: string
+      format: date-time
+      description: Date and time when the message was sent.
+    products:
+      type: string
+      enum:
+        - milk
+        - water
+        - cofee
+        - tea
+        - apple
+        - orange
+        - bread
+
+  securitySchemes:
+    saslScram:
+      type: scramSha256
+      description: протокол безопасности SASL_SSL, механизм безопасности SCRAM-SHA-256
+
+  parameters:
+    eventId:
+      description: идентификатор события
+      schema:
+        type: string
+        description: 'x-xx:xx-xx-xx-xxx'
+
+  messageTraits:
+    question_header:
+      headers:
+        type: object
+        properties:            
+          header:
+            type: string
+            enum:
+              - payment
+              - delivery
+              - discount
+              - vip
+              - staff
+        description: 'тема вопроса'     
+    ind_app_header:
+      headers:
+        type: object
+        properties:            
+          header:
+            type: string
+            enum:
+              - ind_app_buy
+        description: 'заголовок индивидуальной заявки'                 
+    corp_app_header:
+      headers:
+        type: object
+        properties:            
+          header:
+            type: string
+            enum:
+              - corp_app_buy            
+        description: 'заголовок корпоративной заявки'                 
+
+  operationTraits:
+    kafka:
+      bindings:
+        kafka:
+          topic: 'inputs_topic'
+          partitions: 3
+          replicas: 3
+          topicConfiguration:
+          cleanup.policy: ["delete", "compact"]
+          retention.ms: 604800000
+          retention.bytes: 1000000000
+          delete.retention.ms: 86400000
+          max.message.bytes: 1048588
+        bindingVersion: '0.4.0'
