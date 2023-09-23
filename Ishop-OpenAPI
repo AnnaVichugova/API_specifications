@@ -1,0 +1,381 @@
+openapi: 3.0.0
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/VICHIGOVAANNA/Internet-shop/1.0.0
+info:
+  description: 'Типичный интернет-магазин - демо-кейс Анны Вичуговой'
+  version: "1.0.0"
+  title: 'API интернет-магазина'
+  contact:
+    email: anna@mail.com
+tags:
+  - name: manager
+    description: 'Менеджер'
+  - name: customer
+    description: 'Покупатель'
+    
+paths:
+ /product:
+    get:
+      tags:
+        - manager
+        - customer
+      summary: 'Посмотреть каталог товаров'
+      operationId: viewProductCatalog
+      description: 'Параметры фильтрации товаров в каталоге для поиска'
+      parameters:
+        - in: query
+          name: name
+          description: 'название товара для поиска'
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: category
+          description: 'категория товара для поиска'
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: provider
+          description: 'поставщик товара для поиска'
+          required: false
+          schema:
+            type: string             
+        - in: query
+          name: min_price
+          description: 'минимальная цена товара для поиска'
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            maximum: 100500
+        - in: query
+          name: max_price
+          description: 'максимальная цена товара для поиска'
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            maximum: 10005000
+      responses:
+        '200':
+          description: 'результаты поиска по запросу'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '400':
+          description: 'не верные параметры фильтрации'
+          
+    post:
+      tags:
+        - manager
+      summary: 'Добавить товар'
+      operationId: addProduct
+      description: 'Добавить новый товар в каталог'
+      responses:
+        '201':
+          description: 'товар добавлен'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  product:  
+                    $ref: '#/components/schemas/Product'
+        '400':
+          description: 'некорректный ввод'
+        '409':
+          description: 'такой товар уже есть'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+        description: 'Новый товар для добавления в каталог'
+        
+ /provider:
+    get:
+      tags:
+        - manager
+        - customer
+      summary: 'Посмотреть список поставщиков'
+      operationId: viewProviderCatalog
+      description: 'Параметры фильтрации поставщиков в каталоге для поиска'
+      parameters:
+        - in: query
+          name: name
+          description: 'название поставщика для поиска'
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: INN
+          description: 'ИНН поставщика для поиска'
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: phone
+          description: 'телефон поставщика для поиска'
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: address
+          description: 'адрес поставщика для поиска'
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 'результаты поиска по запросу'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Provider'
+        '400':
+          description: 'не верные параметры фильтрации'
+    post:
+      tags:
+        - manager
+      summary: 'Добавить поставщика'
+      operationId: addProvider
+      description: 'Добавление нового поставщика в каталог'
+      responses:
+        '201':
+          description: 'поставщик добавлен'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  product:  
+                    $ref: '#/components/schemas/Provider'
+        '400':
+          description: 'некорректный ввод'
+        '409':
+          description: 'такой поставщик уже есть'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Provider'
+        description: 'Новый поставщик для добавления в каталог'
+
+ /product/{id}:
+  get:
+    tags:
+      - manager
+      - customer
+    summary: 'Посмотреть товар'
+    operationId: viewProduct
+    description: 'Просмотр данных о конкретном товаре по его ID'
+    parameters:
+      - in: path
+        name: id
+        description: ID
+        required: true
+        schema:
+          type: integer
+          format: int64
+          example: 1
+    responses:
+      '200':
+        description: 'Товар найден'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+      '404':
+        description: 'Товар не найден'
+  put:
+      tags:
+        - manager
+      summary: 'Изменить товар'
+      operationId: updateProduct
+      description: 'Изменение параметров товара'
+      parameters:
+        - name: id
+          in: path
+          description: 'ID товара, параметры которого нужно изменить'
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: 'параметры товара изменены успешно'
+        '400':
+          description: 'некорректный ввод'
+        '404':
+          description: 'товар не найден'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+        description: 'Измененные параметры товара'      
+  delete:
+    tags:
+      - manager
+    summary: 'Удалить товар'
+    operationId: deleteProduct
+    description: 'Удаление товара по его идентификатору'
+    parameters:
+      - name: id
+        in: path
+        description: 'Идентификатор товара для удаления'
+        required: true
+        schema:
+          type: integer
+        example: 1
+    responses:
+      '200':
+        description: 'товар успешно удален'
+      '404':
+        description: 'товар не найден'
+      '500':
+        description: 'внутренняя ошибка сервера'
+        
+ /provider/{id}:
+  get:
+    tags:
+      - manager
+      - customer
+    summary: 'Посмотреть поставщика'
+    operationId: viewProvider
+    description: 'Просмотр информации о конкретном поставщике по его ID'
+    parameters:
+      - in: path
+        name: id
+        description: Идентификатор поставщика
+        required: true
+        schema:
+          type: integer
+          format: int64
+          example: 1
+    responses:
+      '200':
+        description: 'Поставщик найден'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Provider'
+      '404':
+        description: 'Поставщик не найден'
+  put:
+      tags:
+        - manager
+      summary: 'Изменить поставщика'
+      operationId: updateProvider
+      description: 'Изменение поставщика по его идентификатору'
+      parameters:
+        - name: id
+          in: path
+          description: 'ID поставщика, параметры которого нужно изменить'
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: 'параметры поставщика изменены успешно'
+        '400':
+          description: 'некорректный ввод'
+        '404':
+          description: 'товар не найден'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Provider'
+        description: 'Измененные параметры поставщика'      
+  delete:
+    tags:
+      - manager
+    summary: 'Удалить поставщика'
+    operationId: deleteProvider
+    description: 'Удаление поставщика по его идентификатору'
+    parameters:
+      - name: id
+        in: path
+        description: 'Идентификатор поставщика для удаления'
+        required: true
+        schema:
+          type: integer
+        example: 1
+    responses:
+      '200':
+        description: 'поставщика успешно удален'
+      '404':
+        description: 'поставщика не найден'
+      '500':
+        description: 'внутренняя ошибка сервера'  
+        
+components:
+  schemas:
+    Product:
+      type: object
+      required:
+        - name
+        - category
+        - provider
+        - price
+        - quantity
+      properties:
+        id:
+          type: integer
+          example: 1        
+        name:
+          type: string
+          example: 'яблоки'
+        category:
+          type: string
+          example: 'еда'
+        provider:
+          $ref: '#/components/schemas/Provider'
+        price:
+          type: number
+          example: 145.00
+        quantity:
+          type: integer
+          example: 10          
+    Provider:
+      required:
+        - name
+        - INN
+        - phone
+        - address
+      properties:
+        id:
+          type: integer
+          example: 1           
+        name:
+          type: string
+          example: 'ООО Ромашка'
+        INN:
+          type: string
+          example: 1234567890          
+        site:
+          type: string
+          format: url
+          example: 'https://www.ooo-camomile.com'
+        phone:
+          type: string
+          example: 7-495-123-45-67
+        address:
+          type: string
+          example: 'г. Москва, ул. Ленина, 123'
