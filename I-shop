@@ -1,0 +1,765 @@
+openapi: 3.0.0
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/VICHIGOVAANNA/Internet-shop/2.0.0
+info:
+  description: 'Типичный интернет-магазин - демо-кейс Анны Вичуговой (расширенная версия для МСА, с JWT-аутентификацией)'
+  version: 2.0.0
+  title: API интернет-магазина
+  contact:
+    email: anna@mail.com
+tags:
+  - name: user
+    description: Пользователь (все категории пользователей)
+  - name: manager
+    description: Менеджер
+  - name: customer
+    description: Покупатель
+  - name: operator
+    description: Оператор склада    
+paths:
+ /login:
+    post:
+      tags:
+        - user
+      summary: Вход пользователя в систему
+      description: Аутентификация пользователя с использованием Bearer Token (токен на предъявителя)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Логин пользователя
+                password:
+                  type: string
+                  description: Пароль пользователя
+      responses:
+        '200':
+          description: Успешная аутентификация
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: Bearer Token для дальнейшей аутентификации
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+        '401':
+          description: Ошибка аутентификации, неверные учетные данные
+        '500':
+          description: Внутренняя ошибка сервера
+          
+ /analytics:
+    post:
+      tags:
+       - manager
+      summary: Получить аналитический отчет
+      operationId: getAnalytics
+      security:
+        - bearerAuth: []  
+      description: Генерация pdf-отчета по заданным фильтрам
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                client_name:
+                  type: string
+                analysis_period:
+                  type: string
+                  format: date
+              required:
+                - client_name
+                - analysis_period
+      responses:
+        '200':
+          description: Отчет успешно софрмирован
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Некорректный запрос
+        '500':
+          description: Ошибка сервера
+          
+ /product:
+    get:
+      tags:
+        - manager
+        - customer
+        - operator
+      summary: Посмотреть каталог товаров
+      operationId: viewProductCatalog
+      description: Параметры фильтрации товаров в каталоге для поиска
+      parameters:
+        - in: query
+          name: name
+          description: название товара для поиска
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: category
+          description: категория товара для поиска
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: provider
+          description: поставщик товара для поиска
+          required: false
+          schema:
+            type: string             
+        - in: query
+          name: min_price
+          description: минимальная цена товара для поиска
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            maximum: 100500
+        - in: query
+          name: max_price
+          description: максимальная цена товара для поиска
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            maximum: 10005000
+      responses:
+        '200':
+          description: результаты поиска по запросу
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '400':
+          description: не верные параметры фильтрации
+          
+    post:
+      tags:
+        - manager
+      summary: 'Добавить товар'
+      operationId: addProduct
+      security:
+        - bearerAuth: []
+      description: Добавить новый товар в каталог
+      responses:
+        '201':
+          description: товар добавлен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  product:  
+                    $ref: '#/components/schemas/Product'
+        '400':
+          description: некорректный ввод
+        '409':
+          description: такой товар уже есть
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+        description: Новый товар для добавления в каталог
+
+        
+ /provider:
+    get:
+      tags:
+        - manager
+        - customer
+      summary: Посмотреть список поставщиков
+      operationId: viewProviderCatalog
+      description: Параметры фильтрации поставщиков в каталоге для поиска
+      parameters:
+        - in: query
+          name: name
+          description: название поставщика для поиска
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: INN
+          description: ИНН поставщика для поиска
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: phone
+          description: телефон поставщика для поиска
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: address
+          description: адрес поставщика для поиска
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: результаты поиска по запросу
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Provider'
+        '400':
+          description: не верные параметры фильтрации
+          
+    post:
+      tags:
+        - manager
+      summary: Добавить поставщика
+      operationId: addProvider
+      security:
+        - bearerAuth: []    
+      description: Добавление нового поставщика в каталог
+      responses:
+        '201':
+          description: поставщик добавлен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  product:  
+                    $ref: '#/components/schemas/Provider'
+        '400':
+          description: некорректный ввод
+        '409':
+          description: такой поставщик уже есть
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Provider'
+        description: Новый поставщик для добавления в каталог
+        
+ /product/{id}:
+  get:
+    tags:
+      - manager
+      - customer
+      - operator
+    summary: Посмотреть товар
+    operationId: viewProduct
+    description: Просмотр данных о конкретном товаре по его ID
+    parameters:
+      - in: path
+        name: id
+        description: ID
+        required: true
+        schema:
+          type: integer
+          format: int64
+          example: 1
+    responses:
+      '200':
+        description: Товар найден
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+      '404':
+        description: 'Товар не найден'
+  put:
+      tags:
+        - manager
+      summary: Изменить товар
+      operationId: updateProduct
+      security:
+        - bearerAuth: []    
+      description: Изменение параметров товара
+      parameters:
+        - name: id
+          in: path
+          description: ID товара, параметры которого нужно изменить
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: параметры товара изменены успешно
+        '400':
+          description: некорректный ввод
+        '404':
+          description: товар не найден
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+        description: Измененные параметры товара    
+  delete:
+    tags:
+      - manager
+    summary: 'Удалить товар'
+    operationId: deleteProduct
+    security:
+        - bearerAuth: []  
+    description: Удаление товара по его идентификатору
+    parameters:
+      - name: id
+        in: path
+        description: Идентификатор товара для удаления
+        required: true
+        schema:
+          type: integer
+        example: 1
+    responses:
+      '200':
+        description: товар успешно удален
+      '404':
+        description: товар не найден
+      '500':
+        description: внутренняя ошибка сервера
+        
+ /provider/{id}:
+  get:
+    tags:
+      - manager
+      - customer
+    summary: Посмотреть поставщика
+    operationId: viewProvider
+    security:
+        - bearerAuth: []  
+    description: Просмотр информации о конкретном поставщике по его ID
+    parameters:
+      - in: path
+        name: id
+        description: Идентификатор поставщика
+        required: true
+        schema:
+          type: integer
+          format: int64
+          example: 1
+    responses:
+      '200':
+        description: Поставщик найден
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Provider'
+      '404':
+        description: Поставщик не найден
+  put:
+      tags:
+        - manager
+      summary: Изменить поставщика
+      operationId: updateProvider
+      security:
+        - bearerAuth: []    
+      description: Изменение поставщика по его идентификатору
+      parameters:
+        - name: id
+          in: path
+          description: ID поставщика, параметры которого нужно изменить
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: параметры поставщика изменены успешно
+        '400':
+          description: некорректный ввод
+        '404':
+          description: товар не найден
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Provider'
+        description: Измененные параметры поставщика      
+  delete:
+    tags:
+      - manager
+    summary: Удалить поставщика
+    operationId: deleteProvider
+    security:
+        - bearerAuth: []  
+    description: Удаление поставщика по его идентификатору
+    parameters:
+      - name: id
+        in: path
+        description: Идентификатор поставщика для удаления
+        required: true
+        schema:
+          type: integer
+        example: 1
+    responses:
+      '200':
+        description: поставщик успешно удален
+      '404':
+        description: поставщик не найден
+      '500':
+        description: внутренняя ошибка сервера  
+
+ /order:
+    get:
+      tags:
+        - manager
+        - customer
+        - operator
+      summary: Посмотреть заказы
+      operationId: viewOrders
+      security:
+        - bearerAuth: []    
+      description: Параметры фильтрации заказов для поиска
+      parameters:
+        - in: query
+          name: id
+          description: номер заказа для поиска
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: start_date
+          description: дата создания заказа
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: результаты поиска по запросу
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+        '400':
+          description: не верные параметры фильтрации
+
+ /order/{id}:
+    patch:
+      tags:
+        - customer
+        - manager
+        - operator
+      summary: Изменить состояние заказа
+      security:
+        - bearerAuth: []       
+      operationId: changeOrderState
+      description: Подтвердить, отменить или изменить статус заказа
+      parameters:
+        - name: id
+          in: path
+          description: ID заказа, статус которого надо изменить
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Заказ успешно изменен
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+        '400':
+          description: Некорректный ввод
+        '404':
+          description: Заказ не найден
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/approvedOrder'
+                - $ref: '#/components/schemas/CanceledOrder'
+                - $ref: '#/components/schemas/CollectedOrder'
+                - $ref: '#/components/schemas/HoldedOrder'
+              discriminator:
+                propertyName: operationType
+              description: Новый статус заказа
+
+ /item:
+    get:
+      tags:
+        - customer
+      summary: Посмотреть товары в корзине
+      operationId: viewItem
+      security:
+        - bearerAuth: []    
+      description: Товары в корзине
+      responses:
+        '200':
+          description: товары в корзине
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Item'
+        '500':
+          description: внутренняя ошибка сервера 
+          
+    post:
+      tags:
+        - customer
+      summary: Добавить товар в корзину
+      operationId: addItem
+      security:
+        - bearerAuth: []    
+      responses:
+        '201':
+          description: товар добавлен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  product:  
+                    $ref: '#/components/schemas/Item'
+        '400':
+          description: некорректный ввод
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Item'
+        description: Товар для добавления в корзину
+
+ /item/{id}:
+    patch:
+      tags:
+        - customer
+      summary: Изменить количество товара в корзине
+      operationId: updateItem
+      security:
+        - bearerAuth: []    
+      description: Изменение количества товара по его идентификатору
+      parameters:
+        - name: id
+          in: path
+          description: ID товара, количество которого нужно изменить в корзине
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: 'Количество товара успешно изменено'
+          content:
+           application/json:
+            schema:
+              $ref: '#/components/schemas/Item'         
+        '400':
+          description: Некорректный ввод
+        '404':
+          description: Товар не найден в корзине
+      requestBody:
+        content:
+          application/json:
+           schema:
+            type: integer
+            minimum: 1
+            maximum: 100500
+            example: 12
+        description: Новое количество единиц товара в корзине 
+
+    delete:
+      tags:
+        - customer
+      summary: Удалить товар из корзины
+      operationId: deleteItem
+      security:
+        - bearerAuth: []    
+      description: Удаление товара из корзины по его идентификатору
+      parameters:
+        - name: id
+          in: path
+          description: Идентификатор товара для удаления
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Товар успешно удален из корзины
+        '404':
+          description: Товар не найден
+        '500':
+          description: Внутренняя ошибка сервера
+          
+components:
+  schemas:
+    SKU:
+      type: object
+      required:
+        - name
+        - category
+        - provider
+        - price
+      properties:
+        name:
+          type: string
+          example: 'яблоки'
+        category:
+          type: string
+          example: 'еда'
+        provider:
+          type: integer
+          example: 1 
+        price:
+          type: number
+          example: 145.00
+    Product:
+      type: object
+      required:
+        - sku
+        - quantity
+      properties:
+        sku:
+          $ref: '#/components/schemas/SKU'       
+        quantity:
+          type: integer
+          example: 10          
+    Provider:
+      required:
+        - name
+        - INN
+        - phone
+        - address
+      properties:
+        id:
+          type: integer
+          example: 1           
+        name:
+          type: string
+          example: ООО Ромашка
+        INN:
+          type: string
+          example: 1234567890          
+        site:
+          type: string
+          format: url
+          example: https://www.ooo-camomile.com
+        phone:
+          type: string
+          example: 7-495-123-45-67
+        address:
+          type: string
+          example: г. Москва, ул. Ленина, 123
+    Order:
+      required:
+        - id
+        - start_date
+        - state
+        - items
+        - sum
+      properties:
+        id:
+          type: integer
+          example: 1        
+        start_date:
+          type: string
+          format: date
+          example: 2023-09-30
+        items: 
+          $ref: '#/components/schemas/Item'
+        state:
+          type: string
+          enum:
+            - новый
+            - принят
+            - найден
+            - подтвержден
+            - собран
+            - оплачен
+            - отменен
+          example: принят
+        sum:
+          type: number
+          example: 145.00
+    Item:
+      required:
+        - id
+        - item
+        - quantity
+      properties:
+        id:
+          type: integer
+          example: 1        
+        item:
+          $ref: '#/components/schemas/SKU'
+        quantity:
+          type: integer
+          example: 2
+          
+    approvedOrder:
+      required:
+        - state
+      properties:
+        state:
+          type: string
+          enum:
+            - подтвержден
+          example: подтвержден
+
+    CanceledOrder:
+      required:
+        - state
+      properties:
+        state:
+          type: string
+          enum:
+            - отменен
+          example: отменен
+          
+    CollectedOrder:
+      required:
+        - state
+      properties:
+        state:
+          type: string
+          enum:
+            - собран
+          example: собран
+
+    HoldedOrder:
+      required:
+        - state
+      properties:
+        state:
+          type: string
+          enum:
+            - на оплате
+          example: на оплате
+
+  securitySchemes:
+    bearerAuth:            
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
