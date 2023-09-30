@@ -4,7 +4,7 @@ servers:
   - description: SwaggerHub API Auto Mocking
     url: https://virtserver.swaggerhub.com/VICHIGOVAANNA/Internet-shop/1.0.0
 info:
-  description: 'Типичный интернет-магазин - демо-кейс Анны Вичуговой'
+  description: 'Типичный интернет-магазин - демо-кейс Анны Вичуговой (упрощенная версия)'
   version: "1.0.0"
   title: 'API интернет-магазина'
   contact:
