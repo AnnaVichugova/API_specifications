@@ -4,11 +4,12 @@ servers:
   - description: SwaggerHub API Auto Mocking
     url: https://virtserver.swaggerhub.com/VICHIGOVAANNA/Internet-shop/2.0.0
 info:
-  description: 'Типичный интернет-магазин - демо-кейс Анны Вичуговой (расширенная версия МСА, с JWT-аутентификацией)'
+  description: 'Типичный интернет-магазин - демо-кейс Анны Вичуговой (расширенная версия для МСА, с JWT-аутентификацией)'
   version: 2.0.0
   title: API интернет-магазина
   contact:
     email: anna@mail.com
+
 tags:
   - name: user
     description: Пользователь (все категории пользователей)
@@ -18,6 +19,7 @@ tags:
     description: Покупатель
   - name: operator
     description: Оператор склада    
+
 paths:
  /login:
     post:
@@ -35,6 +37,7 @@ paths:
                 username:
                   type: string
                   description: Логин пользователя
+                  example: anna_vi
                 password:
                   type: string
                   description: Пароль пользователя
@@ -71,14 +74,14 @@ paths:
             schema:
               type: object
               properties:
-                client_name:
+                client:
                   type: string
                 analysis_period:
                   type: string
                   format: date
               required:
-                - client_name
-                - analysis_period
+               - client
+               - analysis_period
       responses:
         '200':
           description: Отчет успешно софрмирован
@@ -388,13 +391,14 @@ paths:
         '400':
           description: некорректный ввод
         '404':
-          description: товар не найден
+          description: поставщик не найден
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Provider'
-        description: Измененные параметры поставщика      
+        description: Данные поставщика
+        
   delete:
     tags:
       - manager
@@ -556,7 +560,7 @@ paths:
       tags:
         - customer
       summary: Изменить количество товара в корзине
-      operationId: updateItem
+      #operationId: updateItem
       security:
         - bearerAuth: []    
       description: Изменение количества товара по его идентификатору
@@ -568,26 +572,32 @@ paths:
           schema:
             type: integer
             example: 1
+      requestBody:
+        content:
+          application/json:
+             schema:
+                  type: integer              
+                  minimum: 1
+                  maximum: 100500
+        description: Новое количество единиц товара в корзине
       responses:
         '200':
           description: 'Количество товара успешно изменено'
           content:
            application/json:
             schema:
-              $ref: '#/components/schemas/Item'         
+             type: object
+             properties:
+               item:
+                $ref: '#/components/schemas/SKU'
+               quantity:
+                type: integer
+                description: Количество единиц товара в корзине
+                example: 56
         '400':
           description: Некорректный ввод
         '404':
           description: Товар не найден в корзине
-      requestBody:
-        content:
-          application/json:
-           schema:
-            type: integer
-            minimum: 1
-            maximum: 100500
-            example: 12
-        description: Новое количество единиц товара в корзине 
 
     delete:
       tags:
@@ -630,10 +640,11 @@ components:
           type: string
           example: 'еда'
         provider:
-          type: integer
-          example: 1 
+          $ref: '#/components/schemas/Provider'  
         price:
           type: number
+          minimum: 0.001
+          maximum: 100500          
           example: 145.00
     Product:
       type: object
@@ -645,6 +656,8 @@ components:
           $ref: '#/components/schemas/SKU'       
         quantity:
           type: integer
+          minimum: 1
+          maximum: 100500          
           example: 10          
     Provider:
       required:
@@ -716,7 +729,9 @@ components:
           $ref: '#/components/schemas/SKU'
         quantity:
           type: integer
-          example: 2
+          minimum: 1
+          maximum: 100500
+          example: $request.body
           
     approvedOrder:
       required:
@@ -726,6 +741,7 @@ components:
           type: string
           enum:
             - подтвержден
+            - не подтвержден
           example: подтвержден
 
     CanceledOrder:
@@ -735,7 +751,8 @@ components:
         state:
           type: string
           enum:
-            - отменен
+            - отменен клиентом
+            - отменен менеджером
           example: отменен
           
     CollectedOrder:
@@ -746,6 +763,7 @@ components:
           type: string
           enum:
             - собран
+            - на сборке
           example: собран
 
     HoldedOrder:
@@ -756,6 +774,7 @@ components:
           type: string
           enum:
             - на оплате
+            - отказ от оплаты
           example: на оплате
 
   securitySchemes:
