@@ -8,7 +8,7 @@ info:
   version: 2.0.0
   title: API интернет-магазина
   contact:
-    email: anna@mail.com
+    email: anna@mail.com 
 
 tags:
   - name: user
