@@ -40,6 +40,7 @@ paths:
                   example: anna_vi
                 password:
                   type: string
+                  format: password
                   description: Пароль пользователя
       responses:
         '200':
@@ -52,7 +53,7 @@ paths:
                   token:
                     type: string
                     description: Bearer Token для дальнейшей аутентификации
-                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+                    example: eyJ0eXAwcvvcb1QiLCJhbGciOsdfsUzI1NiJ9.eyJpZCI6IjEzMzciLCJ1c2VybmFtZSI6ImJpem9uZSIswwwfcI6MTU5NDIwOTYwMCwicm9sZSI6InVzZXIifQ.ZvkYYnyM92xvxcvNW9_hSis7_x3_9rymsDcvcbvuOcc1I
         '401':
           description: Ошибка аутентификации, неверные учетные данные
         '500':
@@ -594,6 +595,7 @@ paths:
                 type: integer
                 description: Количество единиц товара в корзине
                 example: 56
+
         '400':
           description: Некорректный ввод
         '404':
@@ -646,6 +648,7 @@ components:
           minimum: 0.001
           maximum: 100500          
           example: 145.00
+          
     Product:
       type: object
       required:
@@ -658,7 +661,8 @@ components:
           type: integer
           minimum: 1
           maximum: 100500          
-          example: 10          
+          example: 10   
+          
     Provider:
       required:
         - name
@@ -685,6 +689,7 @@ components:
         address:
           type: string
           example: г. Москва, ул. Ленина, 123
+          
     Order:
       required:
         - id
@@ -716,6 +721,7 @@ components:
         sum:
           type: number
           example: 145.00
+          
     Item:
       required:
         - id
@@ -731,7 +737,7 @@ components:
           type: integer
           minimum: 1
           maximum: 100500
-          example: $request.body
+          example: 45
           
     approvedOrder:
       required:
