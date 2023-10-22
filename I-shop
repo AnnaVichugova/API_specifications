@@ -8,7 +8,7 @@ info:
   version: 2.0.0
   title: API интернет-магазина
   contact:
-    email: anna@mail.com 
+    email: anna@mail.com
 
 tags:
   - name: user
@@ -22,6 +22,27 @@ tags:
 
 paths:
  /login:
+    get:
+      tags:
+       - user
+      description: Просмотр страницы ввода логина и пароля (входа в систему)
+      summary: Просмотр страницы ввода логина и пароля (входа в систему)
+      responses:
+        '200':
+          description: Успешная аутентификация
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: Bearer Token для дальнейшей аутентификации
+                    example: eyJ0eXAwcvvcb1QiLCJhbGciOsdfsUzI1NiJ9.eyJpZCI6IjEzMzciLCJ1c2VybmFtZSI6ImJpem9uZSIswwwfcI6MTU5NDIwOTYwMCwicm9sZSI6InVzZXIifQ.ZvkYYnyM92xvxcvNW9_hSis7_x3_9rymsDcvcbvuOcc1I
+        '401':
+          description: Ошибка аутентификации, неверные учетные данные
+        '500':
+          description: Внутренняя ошибка сервера
     post:
       tags:
         - user
@@ -102,6 +123,7 @@ paths:
         - manager
         - customer
         - operator
+        - user
       summary: Посмотреть каталог товаров
       operationId: viewProductCatalog
       description: Параметры фильтрации товаров в каталоге для поиска
@@ -190,6 +212,7 @@ paths:
       tags:
         - manager
         - customer
+        - user
       summary: Посмотреть список поставщиков
       operationId: viewProviderCatalog
       description: Параметры фильтрации поставщиков в каталоге для поиска
@@ -706,7 +729,9 @@ components:
           format: date
           example: 2023-09-30
         items: 
-          $ref: '#/components/schemas/Item'
+          type: array
+          items:
+            $ref: '#/components/schemas/Item'
         state:
           type: string
           enum:
