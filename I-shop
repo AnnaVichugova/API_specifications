@@ -29,7 +29,7 @@ paths:
       summary: Просмотр страницы ввода логина и пароля (входа в систему)
       responses:
         '200':
-          description: Успешная аутентификация
+          description: Успешное тображение страницы аутентификации
           content:
             application/json:
               schema:
@@ -37,12 +37,12 @@ paths:
                 properties:
                   token:
                     type: string
-                    description: Bearer Token для дальнейшей аутентификации
-                    example: eyJ0eXAwcvvcb1QiLCJhbGciOsdfsUzI1NiJ9.eyJpZCI6IjEzMzciLCJ1c2VybmFtZSI6ImJpem9uZSIswwwfcI6MTU5NDIwOTYwMCwicm9sZSI6InVzZXIifQ.ZvkYYnyM92xvxcvNW9_hSis7_x3_9rymsDcvcbvuOcc1I
-        '401':
-          description: Ошибка аутентификации, неверные учетные данные
-        '500':
-          description: Внутренняя ошибка сервера
+                    description: Содержимое страницы для ввода логина и пароля
+
+        '404':
+          description: Страница не найдена
+        '503':
+          description: Сервер временно недоступен
     post:
       tags:
         - user
