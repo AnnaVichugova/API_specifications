@@ -35,8 +35,8 @@ paths:
               schema:
                 type: object
                 properties:
-                  token:
-                    type: string
+                  page:
+                    type: object
                     description: Содержимое страницы для ввода логина и пароля
 
         '404':
@@ -58,11 +58,19 @@ paths:
                 username:
                   type: string
                   description: Логин пользователя
-                  example: anna_vi
+                  example: anna@example.ru
                 password:
                   type: string
                   format: password
                   description: Пароль пользователя
+                role:
+                  type: string
+                  enum:
+                   - manager
+                   - customer
+                   - operator
+                  description: Роль пользователя
+                  example: manager
       responses:
         '200':
           description: Успешная аутентификация
@@ -177,6 +185,7 @@ paths:
     post:
       tags:
         - manager
+        - operator
       summary: 'Добавить товар'
       operationId: addProduct
       security:
