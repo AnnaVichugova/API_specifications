@@ -29,7 +29,7 @@ paths:
       summary: Просмотр страницы ввода логина и пароля (входа в систему)
       responses:
         '200':
-          description: Успешное тображение страницы аутентификации
+          description: Успешное отображение страницы аутентификации
           content:
             application/json:
               schema:
@@ -114,7 +114,7 @@ paths:
                - analysis_period
       responses:
         '200':
-          description: Отчет успешно софрмирован
+          description: Отчет успешно сформирован
           content:
             application/pdf:
               schema:
