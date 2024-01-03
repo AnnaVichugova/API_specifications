@@ -7,7 +7,7 @@ info:
   description: 'Типичный интернет-магазин - демо-кейс Анны Вичуговой (расширенная версия для МСА, с JWT-аутентификацией)'
   version: 2.0.0
   title: API интернет-магазина
-  contact:
+  contact: 
     email: anna@mail.com
 
 tags:
