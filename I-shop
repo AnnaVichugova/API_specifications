@@ -31,7 +31,7 @@ paths:
         '200':
           description: Успешное отображение страницы аутентификации
           content:
-            application/json:
+            application/html:
               schema:
                 type: object
                 properties:
