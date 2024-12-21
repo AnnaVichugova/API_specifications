@@ -1,0 +1,546 @@
+asyncapi: '3.0.0'
+info:
+  title: Прием клиентских обращений через RabbitMQ
+  version: '1.0.0'
+  description: AsyncAPI спецификация для приема клиентских обращений через RabbitMQ
+
+servers:
+ development:
+  host: my_rmq_dev_host:my_port
+  description: контур разработчика - брокер RabbitMQ. Порт 5672 или 5671 с TLS/SSL-шифрованием 
+  protocol: amqp
+  protocolVersion: 0-9-1
+  tags:
+    - name: "env:development"
+      description: Среда для разработки и отладки
+ staging:
+  host: my_rmq_stage_host:my_port
+  description: тестовый контур - брокер RabbitMQ. Порт 5672 или 5671 с TLS/SSL-шифрованием
+  protocol: amqp
+  protocolVersion: 0-9-1
+  tags:
+    - name: "env:staging"
+      description: Тестовая среда для тестирования
+ production:
+  host: my_rmq_prod_host:my_port
+  description: производственный контур - брокер RabbitMQ. Порт 5672 или 5671 с TLS/SSL-шифрованием
+  protocol: amqp
+  protocolVersion: 0-9-1
+  tags:
+    - name: "env:production"
+      description: Производственная среда для промышленного использования
+
+
+channels:
+  publish_app:
+    address: input_exchange
+    title: Публикация обращений
+    description: канал для публикации обращений от клиентов (заявок на покупку и вопросов)
+    messages:
+      question:
+        $ref: '#/components/messages/question'
+      ind_app:
+        $ref: '#/components/messages/ind_app'
+      corp_app:
+        $ref: '#/components/messages/corp_app'        
+    servers:
+      - $ref: '#/servers/development'
+      - $ref: '#/servers/staging'
+      - $ref: '#/servers/production'      
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: InputsFanoutExchange
+          type: fanout
+          durable: true
+          autoDelete: false
+          vhost: my_rmq_vhost
+          description: входной обменник типа Fanout 
+        bindingVersion: 0.3.0
+  consume_ind_apps:
+    address: ind_apps_queue
+    description: очередь индивидуальных заявок
+    messages:
+      ind_app:
+        $ref: '#/components/messages/ind_app'    
+    servers:
+      - $ref: '#/servers/development'
+      - $ref: '#/servers/staging'
+      - $ref: '#/servers/production'      
+    bindings:            
+      amqp:
+        is: queue
+        queue:
+          name: ind_apps_queue
+          durable: true
+          exclusive: false
+          autoDelete: false
+          vhost: my_rmq_vhost
+        bindingVersion: 0.3.0
+  
+  consume_corp_apps:
+    address: corp_apps_queue
+    description: очередь корпоративных заявок
+    messages:
+      corp_app:
+        $ref: '#/components/messages/corp_app'        
+    servers:
+      - $ref: '#/servers/development'
+      - $ref: '#/servers/staging'
+      - $ref: '#/servers/production'  
+    bindings:            
+      amqp:
+        is: queue
+        queue:
+          name: corp_apps_queue
+          durable: true
+          exclusive: false
+          autoDelete: false
+          vhost: my_rmq_vhost
+        bindingVersion: 0.3.0        
+  
+  consume_payment_questions:
+    address: payment_questions_queue
+    description: очередь вопросов по оплате
+    messages:
+      payment_question:
+        $ref: '#/components/messages/payment_question'
+        traits:
+        - $ref: '#/components/messageTraits/payment_question_header'    
+    servers:
+      - $ref: '#/servers/development'
+      - $ref: '#/servers/staging'
+      - $ref: '#/servers/production'      
+    bindings:            
+      amqp:
+        is: queue
+        queue:
+          name: payment_questions_queue
+          durable: true
+          exclusive: false
+          autoDelete: false
+          vhost: my_rmq_vhost
+        bindingVersion: 0.3.0
+
+  consume_delivery_questions:
+    address: delivery_questions_queue
+    description: очередь вопросов по доставке
+    messages:
+      payment_question:
+        $ref: '#/components/messages/delivery_question'
+        traits:
+        - $ref: '#/components/messageTraits/delivery_question_header'    
+    servers:
+      - $ref: '#/servers/development'
+      - $ref: '#/servers/staging'
+      - $ref: '#/servers/production'      
+    bindings:            
+      amqp:
+        is: queue
+        queue:
+          name: delivery_questions_queue
+          durable: true
+          exclusive: false
+          autoDelete: false
+          vhost: my_rmq_vhost
+        bindingVersion: 0.3.0
+
+  consume_other_questions:
+    address: other_questions_queue
+    description: очередь всех остальных вопросов
+    messages:
+      payment_question:
+        $ref: '#/components/messages/other_question'
+        traits:
+        - $ref: '#/components/messageTraits/other_question_header'    
+    servers:
+      - $ref: '#/servers/development'
+      - $ref: '#/servers/staging'
+      - $ref: '#/servers/production'      
+    bindings:            
+      amqp:
+        is: queue
+        queue:
+          name: other_questions_queue
+          durable: true
+          exclusive: false
+          autoDelete: false
+          vhost: my_rmq_vhost
+        bindingVersion: 0.3.0
+
+
+operations:
+  publish_apps:
+    channel: 
+      $ref: '#/channels/publish_app'
+    action: send  
+    bindings:
+      amqp:
+        cc: ['app', 'app.company.{company_name}', 'question']
+        deliveryMode: 2
+        mandatory: true
+        timestamp: true
+        ack: false
+        bindingVersion: 0.3.0
+  
+  consume_ind_apps:
+    channel: 
+      $ref: '#/channels/consume_ind_apps'
+    action: receive  
+    bindings:
+      amqp:
+        cc: ['app']
+        priority: 2
+        deliveryMode: 2
+        mandatory: true
+        timestamp: true
+        ack: false
+        bindingVersion: 0.3.0
+  consume_corp_apps:
+    channel: 
+      $ref: '#/channels/consume_corp_apps'
+    action: receive  
+    bindings:
+      amqp:
+        cc: ['app.company.{company_name}']
+        priority: 1
+        deliveryMode: 2
+        mandatory: true
+        timestamp: true
+        ack: false
+        bindingVersion: 0.3.0        
+  
+  consume_payment_questions:
+    channel: 
+      $ref: '#/channels/consume_payment_questions'
+    action: receive  
+    bindings:
+      amqp:
+        cc: ['question']
+        priority: 3
+        deliveryMode: 2
+        mandatory: true
+        timestamp: true
+        ack: false
+        bindingVersion: 0.3.0  
+
+  consume_delivery_questions:
+    channel: 
+      $ref: '#/channels/consume_delivery_questions'
+    action: receive  
+    bindings:
+      amqp:
+        cc: ['question']
+        priority: 3
+        deliveryMode: 2
+        mandatory: true
+        timestamp: true
+        ack: false
+        bindingVersion: 0.3.0  
+
+  consume_other_questions:
+    channel: 
+      $ref: '#/channels/consume_other_questions'
+    action: receive  
+    bindings:
+      amqp:
+        cc: ['question']
+        priority: 3
+        deliveryMode: 2
+        mandatory: true
+        timestamp: true
+        ack: false
+        bindingVersion: 0.3.0  
+
+components:
+  messages:
+    question:
+      name: question
+      title: вопрос
+      description: вопросы клиентов магазина
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/question_header'       
+      payload:
+        $ref: '#/components/schemas/question'
+
+    payment_question:
+      name: payment_question
+      title: вопрос по оплате
+      description: вопросы клиентов по оплате
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/payment_question_header'       
+      payload:
+        $ref: '#/components/schemas/payment_question'
+
+    delivery_question:
+      name: delivery_question
+      title: вопрос по доставке
+      description: вопросы клиентов по доставке
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/delivery_question_header'       
+      payload:
+        $ref: '#/components/schemas/delivery_question'        
+
+    other_question:
+      name: other_question
+      title: другие вопросы
+      description:  все остальные вопросы клиентов (по вип-обслуживанию, скидкам, работе с персоналом)
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/other_question_header'       
+      payload:
+        $ref: '#/components/schemas/other_question'  
+
+    ind_app:
+      name: ind_app
+      title: заявки на покупку от физлиц
+      description: индивидуальные заявки (от физлиц)
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/ind_app_header'
+      payload:
+        $ref: '#/components/schemas/ind_app'
+
+    corp_app:
+      name: corp_app
+      title: заявки на покупку от юрлиц
+      summary: корпоративные заявки (от юрлиц)
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/corp_app_header'
+      payload:
+        $ref: '#/components/schemas/corp_app'
+
+  schemas:
+    question:
+      type: object
+      description: вопрос по работе магазина
+      properties:
+        id:
+          type: string
+          description: идентификатор обращения
+          example: q-x-xx-xx-xxxx
+        name:
+          type: string
+          description: имя отправителя          
+        content:
+          type: string
+          description: содержимое вопроса             
+        sentAt:
+          $ref: '#/components/schemas/sentAt'
+
+    payment_question:
+      type: object
+      description: вопрос по оплате
+      properties:
+        id:
+          type: string
+          description: идентификатор обращения
+          example: q-x-xx-xx-xxxx
+        name:
+          type: string
+          description: имя отправителя          
+        content:
+          type: string
+          description: содержимое вопроса             
+        sentAt:
+          $ref: '#/components/schemas/sentAt'
+
+    delivery_question:
+      type: object
+      description: вопрос по доставке
+      properties:
+        id:
+          type: string
+          description: идентификатор обращения
+          example: q-x-xx-xx-xxxx
+        name:
+          type: string
+          description: имя отправителя          
+        content:
+          type: string
+          description: содержимое вопроса             
+        sentAt:
+          $ref: '#/components/schemas/sentAt'
+
+    other_question:
+      type: object
+      description: другой вопрос
+      properties:
+        id:
+          type: string
+          description: идентификатор обращения
+          example: q-x-xx-xx-xxxx
+        name:
+          type: string
+          description: имя отправителя          
+        content:
+          type: string
+          description: содержимое вопроса             
+        sentAt:
+          $ref: '#/components/schemas/sentAt'
+
+    ind_app:
+      type: object
+      description: индивидуальная заявка на покупку продукта
+      properties:
+        id:
+          type: string
+          description: идентификатор индивидуальной заявки
+          example: ia-x-xx-xxx-xxx
+        client_name:
+          type: string
+          description: имя клиента
+          example: Василь Василич          
+        content:
+          $ref: '#/components/schemas/appContent'
+        sentAt:
+          $ref: '#/components/schemas/sentAt'          
+
+    corp_app:
+      type: object
+      description: корпоративная заявка на покупку продукта
+      properties:
+        id:
+          type: string
+          description: идентификатор корпоративной заявки
+          example: ca-x-xx-xxx-xxx
+        company_name:
+          type: string
+          description: название компании
+          example: ООО "Ромашка"         
+        content:
+          $ref: '#/components/schemas/appContent'
+        sentAt:
+          $ref: '#/components/schemas/sentAt'
+    sentAt:
+      type: string
+      format: date-time
+      description: Дата и время отправки сообщения
+
+    appContent:
+      type: array
+      description: Перечень продуктов и их количество, которые хочет купить покупатель
+      minItems: 1
+      maxItems: 10
+      items:
+        type: object
+        properties:
+          product:
+            type: string
+            description: название продукта
+            enum:
+              - яблоки
+              - сыр
+              - рыба
+              - чай
+              - хлеб
+              - кофе
+              - печенье
+          quantity:
+            type: integer
+            description: количество единиц продукта
+            minimum: 1
+            maximum: 10
+            
+  messageTraits:
+    question_header:
+      headers:
+        type: object
+        description: Заголовок сообщения-вопроса
+        properties:
+          subject:
+            type: string
+            enum:
+                - question
+            description: предмет обращения - вопрос    
+          theme:
+            type: string
+            description: тип вопроса 
+            enum:
+                - payment
+                - delivery
+                - vip
+                - discount
+                - staff
+
+    payment_question_header:
+      headers:
+        type: object
+        description: Заголовок сообщения-вопроса по оплате
+        properties:
+          subject:
+            type: string
+            enum:
+                - question
+            description: предмет обращения - вопрос по оплате    
+          theme:
+            type: string
+            description: вопрос по оплате
+            enum:
+                - payment     
+
+    delivery_question_header:
+      headers:
+        type: object
+        description: Заголовок сообщения-вопроса по доставке
+        properties:
+          subject:
+            type: string
+            enum:
+                - question
+            description: предмет обращения - вопрос по доставке    
+          theme:
+            type: string
+            description: вопрос по доставке 
+            enum:
+                - delivery   
+
+    other_question_header:
+      headers:
+        type: object
+        description: Заголовок сообщения-вопроса
+        properties:
+          subject:
+            type: string
+            enum:
+                - question
+            description: предмет обращения - вопрос    
+          theme:
+            type: string
+            description: тип вопроса 
+            enum:
+                - vip
+                - discount
+                - staff
+
+    ind_app_header:
+      headers:
+        type: object
+        description: Заголовок индивидуальной заявки на покупку (просто app)
+        enum:
+          - app
+        properties:
+          subject:
+            type: string
+            description: заголовок индивидуальной заявки (просто app)
+
+    corp_app_header:
+      headers:
+        type: object
+        description: Заголовок корпоративной заявки на покупку (app.company.{company_name})
+        properties:
+          subject:
+            type: string
+            description: заголовок корпоративной заявки на покупкe c названием компании
+            enum:
+              - app.company.{company_name}
+            example: app.company.oooromashka  
+            parameters:
+            company_name:
+              description: название компании
+              location: $message.headers
