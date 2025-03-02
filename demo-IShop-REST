@@ -2,10 +2,10 @@ openapi: 3.0.0
 servers:
   # Added by API Auto Mocking Plugin
   - description: SwaggerHub API Auto Mocking
-    url: https://virtserver.swaggerhub.com/VICHIGOVAANNA/Internet-shop/2.0.1
+    url: https://virtserver.swaggerhub.com/VICHIGOVAANNA/Internet-shop/2.0.2
 info:
-  description: 'Пример для реализации REST-приложения Интернет-магазин - демо-кейс Анны Вичуговой'
-  version: 2.0.1
+  description: Пример для реализации от 07 августа 2024 года интернет-магазин - демо-кейс Анны Вичуговой
+  version: 2.0.2
   title: API интернет-магазина
   contact: 
     email: anna@mail.com
@@ -22,14 +22,15 @@ tags:
 
 paths:
  /registration:
-    get:
+     get:
       tags:
        - user
       description: Просмотр страницы регистрации пользователя
       summary: Просмотр страницы регистрации пользователя в системе
+      operationId: ViewRegistrationForm
       responses:
         '200':
-          description: Успешное отображение страницы регистрации
+          description: Успешное отображение страницы с формой регистрации
           content:
             application/html:
               schema:
@@ -37,16 +38,17 @@ paths:
                 properties:
                   page:
                     type: object
-                    description: Содержимое страницы для ввода логина и пароля
+                    description: Содержимое страницы с формой регистрации
 
         '404':
           description: Страница не найдена
         '503':
           description: Сервер временно недоступен
-    post:
+     post:
       tags:
         - user
       summary: Регистрация нового пользователя
+      operationId: NewRegistration
       description: Регистрация нового пользователя с записью его в БД
       requestBody:
         required: true
@@ -64,24 +66,16 @@ paths:
                   format: password
                   description: Пароль пользователя
                 role:
-                  type: string
+                  type: integer
                   enum:
-                   - manager
-                   - customer
-                   - operator
-                  description: Роль пользователя
-                  example: manager
+                   - 1
+                   - 2
+                   - 3
+                  description: Роль пользователя 1- customer, 2 - manager, 3 - operator
+                  example: 2
       responses:
-        '200':
+        '201':
           description: Успешно зарегистрирован
-          content:
-            application/html:
-              schema:
-                type: object
-                properties:
-                  page:
-                    type: object
-                    description: на самом деле ничего после этого не возвращается
         '500':
           description: Внутренняя ошибка сервера
           
@@ -93,7 +87,7 @@ paths:
       summary: Просмотр страницы ввода логина и пароля (входа в систему)
       responses:
         '200':
-          description: Успешное отображение страницы аутентификации
+          description: Успешное отображение страницы с формой входа в систему 
           content:
             application/html:
               schema:
@@ -109,7 +103,7 @@ paths:
           description: Сервер временно недоступен
     post:
       tags:
-        - user
+      - user
       summary: Вход пользователя в систему
       description: Аутентификация пользователя с использованием куки-файла с JWT-токеном
       requestBody:
@@ -153,14 +147,65 @@ paths:
           description: Внутренняя ошибка сервера
           
  /analytics:
-    post:
+    get:
       tags:
        - manager
-      summary: Получить аналитический отчет
+      summary: Анализировать статистику
       operationId: getAnalytics
       security:
         - CookieAuth: []  
-      description: Генерация pdf-отчета по заданным фильтрам
+      description: Открытие дэшборда в BI-системе
+      responses:
+        '200':
+          description: Успешное отображение дашборда BI-системы в новой вкладке
+          content:
+            application/html:
+              schema:
+                type: object
+                properties:
+                  page:
+                    type: object
+                    description: Содержимое страницы с аналитическим дашбордом в новой вкладке
+        '400':
+          description: Некорректный запрос
+        '500':
+          description: Ошибка сервера
+ 
+ /customer:
+    get:
+      tags:
+        - manager
+      summary: Посмотреть клиентов
+      operationId: viewCustomers
+      security:
+        - CookieAuth: []    
+      description: Параметры фильтрации клиентов для поиска
+      parameters:
+        - in: query
+          name: search_customer_status
+          description: номер статуса клиента для поиска
+          required: false
+          schema:
+            $ref: '#/components/schemas/CustomerStatus'       
+      responses:
+        '200':
+          description: результаты поиска по запросу
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Customer'    
+        '400':
+          description: не верные параметры фильтрации
+    post:
+      tags:
+       - manager
+      summary: Найти клиента
+      operationId: findCustomer
+      security:
+        - CookieAuth: []  
+      description: Поиск клиента
       requestBody:
         required: true
         content:
@@ -168,30 +213,23 @@ paths:
             schema:
               type: object
               properties:
-                start_date:
-                  type: integer
-                  example: 1
-                  description: месяц начала периода для отчета
-                finish_date:
-                  type: integer
-                  example: 12
-                  description: месяц окончания периода для отчета
-              required:
-               - start_date
-               - finish_date
+                search_customer:
+                  type: string
+                  example: Иванов Иван Иваныч
+                  description: Имя клиента
       responses:
         '200':
-          description: Отчет успешно сформирован
+          description: Клиенты найдены
           content:
-            application/pdf:
+            application/json:
               schema:
-                type: object
-                description: PDF-файл аналитического отчета
-                example: 22_02_2024.pdf
+                type: array
+                items:
+                  $ref: '#/components/schemas/Customer'   
         '400':
           description: Некорректный запрос
         '500':
-          description: Ошибка сервера
+          description: Ошибка сервера 
           
  /product:
     get:
@@ -202,28 +240,25 @@ paths:
       description: Параметры фильтрации товаров в каталоге для поиска
       parameters:
         - in: query
-          name: name
+          name: search_product_name
           description: название товара для поиска
           required: false
           schema:
             type: string
-                  
         - in: query
-          name: min_price
+          name: search_product_min_price
           description: минимальная цена товара для поиска
           schema:
-            type: integer
-            format: int32
+            type: number
             minimum: 0
-            maximum: 100500
+            maximum: 10005000.99
         - in: query
-          name: max_price
+          name: search_product_max_price
           description: максимальная цена товара для поиска
           schema:
-            type: integer
-            format: int32
+            type: number
             minimum: 0
-            maximum: 10005000
+            maximum: 10005000.99
       responses:
         '200':
           description: результаты поиска по запросу
@@ -238,7 +273,7 @@ paths:
           
     post:
       tags:
-        - manager
+        - operator
       summary: 'Добавить товар'
       operationId: addProduct
       security:
@@ -275,13 +310,13 @@ paths:
  /new_product:
     get:
       tags:
-        - manager
+        - operator
       operationId: addNewProduct
       description: Просмотр страницы добавления нового продукта
       summary: Просмотр страницы  добавления нового продукта
       responses:
         '200':
-          description: Успешное отображение страницы
+          description: Успешное отображение страницы с формой добавления нового товара
           content:
             application/html:
               schema:
@@ -304,25 +339,29 @@ paths:
       description: Параметры фильтрации поставщиков в каталоге для поиска
       parameters:
         - in: query
-          name: name
+          name: search_provider_name
           description: название поставщика для поиска
           required: false
           schema:
             type: string
-        
         - in: query
-          name: phone
+          name: search_provider_phone
           description: телефон поставщика для поиска
           required: false
           schema:
             type: string
-            
         - in: query
-          name: address
-          description: адрес поставщика для поиска
+          name: search_provider_email
+          description: email поставщика для поиска
           required: false
           schema:
             type: string
+        - in: query
+          name: search_provider_address
+          description: адрес поставщика для поиска
+          required: false
+          schema:
+            type: string            
       responses:
         '200':
           description: результаты поиска по запросу
@@ -337,7 +376,7 @@ paths:
           
     post:
       tags:
-        - manager
+        - operator
       summary: Добавить поставщика
       operationId: addProvider
       security:
@@ -354,7 +393,7 @@ paths:
                   id:
                     type: integer
                     example: 1
-                  product:  
+                  provider:  
                     $ref: '#/components/schemas/Provider'
         '400':
           description: некорректный ввод
@@ -370,13 +409,13 @@ paths:
  /new_provider:
     get:
       tags:
-        - manager
+        - operator
       operationId: addNewProvider
       description: Просмотр страницы добавления нового поставщика
       summary: Просмотр страницы  добавления нового поставщика
       responses:
         '200':
-          description: Успешное отображение страницы
+          description: Успешное отображение страницы с формой добавления нового поставщика
           content:
             application/html:
               schema:
@@ -393,14 +432,14 @@ paths:
  /product/{id}:
    get:
     tags:
-      - manager
+      - user
     summary: Посмотреть товар
     operationId: viewProduct
     description: Просмотр данных о конкретном товаре по его идентификатору
     parameters:
       - in: path
         name: id
-        description: ID
+        description: идентификатор товара
         required: true
         schema:
           type: integer
@@ -414,11 +453,11 @@ paths:
             schema:
               $ref: '#/components/schemas/Product'
       '404':
-        description: 'Товар не найден'
+       description: 'Товар не найден'
 
    put:
       tags:
-        - manager
+        - operator
       summary: Изменить товар
       operationId: updateProduct
       security:
@@ -445,11 +484,34 @@ paths:
             schema:
               $ref: '#/components/schemas/Product'
         description: Измененные параметры товара    
+   delete:
+     tags:
+      - operator
+     summary: Удалить товар
+     operationId: deleteProduct
+     security:
+        - CookieAuth: []  
+     description: Удаление товар по его идентификатору
+     parameters:
+      - name: id
+        in: path
+        description: Идентификатор товара для удаления
+        required: true
+        schema:
+          type: integer
+        example: 1
+     responses:
+      '200':
+        description: товар успешно удален
+      '404':
+        description: товар не найден
+      '500':
+        description: внутренняя ошибка сервера         
   
  /provider/{id}:
     get:
       tags:
-        - manager
+        - user
       summary: Посмотреть поставщика
       operationId: viewProvider
       security:
@@ -475,7 +537,7 @@ paths:
           description: Поставщик не найден
     put:
       tags:
-        - manager
+        - operator
       summary: Изменить поставщика
       operationId: updateProvider
       security:
@@ -505,7 +567,7 @@ paths:
 
     delete:
      tags:
-      - manager
+      - operator
      summary: Удалить поставщика
      operationId: deleteProvider
      security:
@@ -531,6 +593,7 @@ paths:
     get:
       tags:
         - manager
+        - operator
       summary: Посмотреть заказы
       operationId: viewOrders
       security:
@@ -538,18 +601,40 @@ paths:
       description: Параметры фильтрации заказов для поиска
       parameters:
         - in: query
-          name: id
+          name: search_order_id
           description: номер заказа для поиска
           required: false
           schema:
             type: integer
         - in: query
-          name: start_date
+          name: search_order_date
           description: дата создания заказа
           required: false
           schema:
             type: string
             format: date
+        - in: query
+          name: search_order_status
+          description: статус заказа
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+        - in: query
+          name: search_order_ammount_min
+          description: минимальная сумма заказа для поиска
+          schema:
+            type: number
+            minimum: 0
+            maximum: 10005000.99
+        - in: query
+          name: search_order_ammount_max
+          description: минимальная сумма заказа для поиска
+          schema:
+            type: number
+            minimum: 0
+            maximum: 10005000.99            
       responses:
         '200':
           description: результаты поиска по запросу
@@ -561,11 +646,46 @@ paths:
                   $ref: '#/components/schemas/Order'
         '400':
           description: не верные параметры фильтрации
+    post:
+      tags:
+       - manager
+       - operator
+      summary: Найти заказ клиента
+      operationId: findCustomerOrder
+      security:
+        - CookieAuth: []  
+      description: Поиск заказа клиента
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                search_order_customer:
+                  type: string
+                  example: Иванов Иван Иваныч
+                  description: Имя клиента
+      responses:
+        '200':
+          description: Заказы клиента найдены
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+        '400':
+          description: Некорректный запрос
+        '500':
+          description: Ошибка сервера
+
 
  /order/{id}:
     put:
       tags:
         - manager
+        - operator
       summary: Изменить состояние заказа
       security:
         - CookieAuth: []       
@@ -585,9 +705,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Order'
+                $ref: '#/components/schemas/Order'
         '400':
           description: Некорректный ввод
         '404':
@@ -597,7 +715,7 @@ paths:
           application/json:
             schema:
               oneOf:
-                - $ref: '#/components/schemas/OrderStates'
+                - $ref: '#/components/schemas/OrderStatus'
               discriminator:
                 propertyName: operationType
               description: Новый статус заказа
@@ -617,10 +735,11 @@ components:
           type: string
           example: 'яблоки'
         provider:
-          $ref: '#/components/schemas/Provider'
+          type: integer
+          example: 10            
         price:
           type: number
-          example: 145.00
+          example: 145.50
         quantity:
           type: integer
           minimum: 1
@@ -647,50 +766,96 @@ components:
           type: string
           example: 'г. Москва, ул. Ленина, 123'
    
-    OrderStates:
+    OrderStatus:
       required:
-        - state
+        - status
       properties:
         state:
           type: integer
+          minimum: 2
+          maximum: 10          
+          example: 3   
           enum:
-            - 1 (новый)
-            - 2 (в обработке)
-            - 3 (собран)
-            - 4 (в доставке)
-            - 5 (отменен магазином)
-          example: 3  
+            - 2 (в работе)
+            - 4 (отменен магазином)
+            - 5 (в оплате)
+            - 6 (оплачен)
+            - 7 (в сборке)
+            - 8 (собран)
+            - 9 (в доставке)
+            - 10 (отменен магазином)            
           
     Order:
       required:
         - id
         - customer
+        - status
         - date
-        - state
-        - address
-        - sum
+        - ammount
       properties:
         id:
           type: integer
           example: 1        
         customer:
-          type: string
-          example: 'Иванов Иван Иванович'
+          type: integer
+          example: 1  
         date:
           type: string
           format: date
           example: 2023-09-30
-        state:
-          $ref: '#/components/schemas/OrderStates'
-        address:
-          type: string
-          example: 'г. Москва, ул. Ленина, 123'
-        sum:
+        status:
+          type: integer
+          minimum: 1
+          maximum: 10          
+          example: 5  
+        ammount:
           type: number
-          example: 145.00
+          example: 145.50
+
+    CustomerStatus:
+      required:
+        - status
+      properties:
+        status:
+          type: integer
+          minimum: 1
+          maximum: 6          
+          example: 3   
+          enum:
+            - 1 (новый)
+            - 2 (постоянный)
+            - 3 (серебрянный)
+            - 4 (золото)
+            - 5 (премиум)
+            - 6 (заблокирован)
+
+    Customer:
+      required:
+        - name
+        - phone
+        - email
+        - status
+      properties:
+        name:
+          type: string
+          example: ООО Ромашка
+        email:
+          type: string
+          example: 'email@com'
+        phone:
+          type: string
+          example: 7-495-123-45-67
+        status:
+            oneOf:
+              - $ref: '#/components/schemas/CustomerStatus'
+            discriminator:
+              propertyName: operationType
+            description: новый статус клиента
+          
 
   securitySchemes:
     CookieAuth:            
       type: apiKey
       in: cookie
       name: AuthCookie
+      description: JWT токен в Cookie для дальнейшей аутентификации
