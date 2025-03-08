@@ -1,0 +1,118 @@
+############################# ячейка 1 в Google Colab ###############################
+# установка библиотек
+!pip install faststream[kafka]
+!pip install faker
+!pip install nest_asyncio
+
+#импорт модулей
+import logging
+
+# настройка логирования
+logging.basicConfig(level=logging.INFO)
+
+############################# ячейка 2 в Google Colab ###############################
+# запись конвейера в файл
+%%writefile kafka_stream_pipeline.py
+#импорт модулей
+import json
+import random
+import time
+import asyncio
+import nest_asyncio
+import logging
+import ssl
+from datetime import datetime
+from time import sleep
+from faststream import FastStream, Logger
+from faststream.kafka import KafkaBroker, TopicPartition
+from faststream.security import BaseSecurity, SASLScram256
+from dataclasses import dataclass, asdict
+from typing import Union
+
+# Импорт модуля faker
+from faker import Faker
+from faker.providers.address.ru_RU import Provider
+
+
+# Определение параметров подключения к Kafka
+kafka_url="kafka-host:9092"
+username="kafka-user"
+password="kafka-user-password"
+
+#Параметры подключения к Kafka
+class SecurityConfig:
+       def __init__(self, sasl_mechanism, security_protocol, sasl_plain_username, sasl_plain_password, use_ssl):
+           self.sasl_mechanism = sasl_mechanism
+           self.security_protocol = security_protocol
+           self.sasl_plain_username = sasl_plain_username
+           self.sasl_plain_password = sasl_plain_password
+           self.use_ssl = use_ssl
+
+ssl_context = ssl.create_default_context()
+security = SASLScram256(
+    ssl_context=ssl_context,
+    username=username,
+    password=password,
+)
+
+#Определение топика Kafka
+topic = "InputsTopic"
+
+# Конструктор KafkaBroker с объектом безопасности
+broker = KafkaBroker([kafka_url], security=security)
+
+# Инициализация FastStream приложения
+app = FastStream(broker)
+
+# Определение классов
+# Базовый класс для запросов
+@dataclass
+class RequestData:
+    moment: str
+    name: str
+    subject: str
+    content: str
+
+# Класс для корпоративных запросов
+@dataclass
+class CorporateRequest(RequestData):
+    inn: str
+
+# Класс для частных запросов
+@dataclass
+class PrivateRequest(RequestData):
+    phone_number: str
+    age: int
+
+# Класс для заявок с темой "question"
+@dataclass
+class QuestionRequest(RequestData):
+    priority: int
+
+# Варианты схем публикуемых сообщений
+RequestSchema = Union[CorporateRequest, PrivateRequest, QuestionRequest]
+
+# Декорированная функция для публикации данных
+@broker.publisher(topic, schema = RequestSchema)
+async def publish_fake_data(msg: RequestSchema):
+    logging.info(msg)
+
+# Декорированная функция для потребления данных из раздела 0
+@broker.subscriber(partitions=[TopicPartition(topic, 0)] )
+async def questions_processing(msg: CorporateRequest):
+    logging.info(msg)
+
+# Декорированная функция для потребления данных из раздела 1
+@broker.subscriber(partitions=[TopicPartition(topic, 1)] )
+async def corp_apps_processing(msg: PrivateRequest):
+    logging.info(msg)
+
+# Декорированная функция для потребления данных из раздела 2
+@broker.subscriber(partitions=[TopicPartition(topic, 2)] )
+async def fiz_apps_processing(msg: QuestionRequest):
+    logging.info(msg)
+
+
+############################# ячейка 3 в Google Colab ###############################
+# автогенерация документации
+!faststream docs gen kafka_stream_pipeline:app
