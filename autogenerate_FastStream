@@ -1,7 +1,6 @@
 ############################# ячейка 1 в Google Colab ###############################
 # установка библиотек
 !pip install faststream[kafka]
-!pip install faker
 !pip install nest_asyncio
 
 #импорт модулей
@@ -28,11 +27,6 @@ from faststream.kafka import KafkaBroker, TopicPartition
 from faststream.security import BaseSecurity, SASLScram256
 from dataclasses import dataclass, asdict
 from typing import Union
-
-# Импорт модуля faker
-from faker import Faker
-from faker.providers.address.ru_RU import Provider
-
 
 # Определение параметров подключения к Kafka
 kafka_url="kafka-host:9092"
