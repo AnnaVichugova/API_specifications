@@ -106,7 +106,6 @@ async def corp_apps_processing(msg: PrivateRequest):
 async def fiz_apps_processing(msg: QuestionRequest):
     logging.info(msg)
 
-
 ############################# ячейка 3 в Google Colab ###############################
 # автогенерация документации
 !faststream docs gen kafka_stream_pipeline:app
