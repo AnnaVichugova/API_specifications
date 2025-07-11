@@ -30,7 +30,7 @@ queue_6 = RabbitQueue("OtherQuestionsQueue", bind_arguments={"subject": "questio
 # Инициализация FastStream приложения
 app = FastStream(broker)
 
-# Определение классов
+########### Определение классов полезной нагрузки сообщений#############
 # Базовый класс для запросов
 @dataclass
 class RequestData:
