@@ -1,0 +1,398 @@
+{
+  "asyncapi": "2.6.0",
+  "defaultContentType": "application/json",
+  "info": {
+    "title": "FastStream",
+    "version": "0.1.0",
+    "description": ""
+  },
+  "servers": {
+    "development": {
+      "url": "amqps://user:password@host:1111/vhost",
+      "protocol": "amqps",
+      "protocolVersion": "0.9.1"
+    }
+  },
+  "channels": {
+    "InputsQueue:InputsFanoutExchange:HandleInputsQueue": {
+      "servers": [
+        "development"
+      ],
+      "bindings": {
+        "amqp": {
+          "is": "routingKey",
+          "bindingVersion": "0.2.0",
+          "exchange": {
+            "type": "fanout",
+            "name": "InputsFanoutExchange",
+            "durable": false,
+            "autoDelete": false,
+            "vhost": "/vhost"
+          }
+        }
+      },
+      "subscribe": {
+        "message": {
+          "$ref": "#/components/messages/InputsQueue:InputsFanoutExchange:HandleInputsQueue:Message"
+        }
+      }
+    },
+    "CorpAppsQueue:AppsTopicExchange:HandleCorpAppsQueue": {
+      "servers": [
+        "development"
+      ],
+      "bindings": {
+        "amqp": {
+          "is": "routingKey",
+          "bindingVersion": "0.2.0",
+          "queue": {
+            "name": "CorpAppsQueue",
+            "durable": false,
+            "exclusive": false,
+            "autoDelete": false,
+            "vhost": "/vhost"
+          },
+          "exchange": {
+            "type": "topic",
+            "name": "AppsTopicExchange",
+            "durable": false,
+            "autoDelete": false,
+            "vhost": "/vhost"
+          }
+        }
+      },
+      "subscribe": {
+        "bindings": {
+          "amqp": {
+            "cc": "app.company.*",
+            "ack": true,
+            "bindingVersion": "0.2.0"
+          }
+        },
+        "message": {
+          "$ref": "#/components/messages/CorpAppsQueue:AppsTopicExchange:HandleCorpAppsQueue:Message"
+        }
+      }
+    },
+    "IndAppsQueue:AppsTopicExchange:HandleIndAppsQueue": {
+      "servers": [
+        "development"
+      ],
+      "bindings": {
+        "amqp": {
+          "is": "routingKey",
+          "bindingVersion": "0.2.0",
+          "queue": {
+            "name": "IndAppsQueue",
+            "durable": false,
+            "exclusive": false,
+            "autoDelete": false,
+            "vhost": "/vhost"
+          },
+          "exchange": {
+            "type": "topic",
+            "name": "AppsTopicExchange",
+            "durable": false,
+            "autoDelete": false,
+            "vhost": "/vhost"
+          }
+        }
+      },
+      "subscribe": {
+        "bindings": {
+          "amqp": {
+            "cc": "app",
+            "ack": true,
+            "bindingVersion": "0.2.0"
+          }
+        },
+        "message": {
+          "$ref": "#/components/messages/IndAppsQueue:AppsTopicExchange:HandleIndAppsQueue:Message"
+        }
+      }
+    },
+    "DeliveryQueue:QuestionsHeadersExchange:HandleDeliveryQueue": {
+      "servers": [
+        "development"
+      ],
+      "bindings": {
+        "amqp": {
+          "is": "routingKey",
+          "bindingVersion": "0.2.0",
+          "exchange": {
+            "type": "headers",
+            "name": "QuestionsHeadersExchange",
+            "durable": false,
+            "autoDelete": false,
+            "vhost": "/vhost"
+          }
+        }
+      },
+      "subscribe": {
+        "message": {
+          "$ref": "#/components/messages/DeliveryQueue:QuestionsHeadersExchange:HandleDeliveryQueue:Message"
+        }
+      }
+    },
+    "PaymentQueue:QuestionsHeadersExchange:HandlePaymentQueue": {
+      "servers": [
+        "development"
+      ],
+      "bindings": {
+        "amqp": {
+          "is": "routingKey",
+          "bindingVersion": "0.2.0",
+          "exchange": {
+            "type": "headers",
+            "name": "QuestionsHeadersExchange",
+            "durable": false,
+            "autoDelete": false,
+            "vhost": "/vhost"
+          }
+        }
+      },
+      "subscribe": {
+        "message": {
+          "$ref": "#/components/messages/PaymentQueue:QuestionsHeadersExchange:HandlePaymentQueue:Message"
+        }
+      }
+    },
+    "OtherQuestionsQueue:QuestionsHeadersExchange:HandleOtherQuestionsQueue": {
+      "servers": [
+        "development"
+      ],
+      "bindings": {
+        "amqp": {
+          "is": "routingKey",
+          "bindingVersion": "0.2.0",
+          "exchange": {
+            "type": "headers",
+            "name": "QuestionsHeadersExchange",
+            "durable": false,
+            "autoDelete": false,
+            "vhost": "/vhost"
+          }
+        }
+      },
+      "subscribe": {
+        "message": {
+          "$ref": "#/components/messages/OtherQuestionsQueue:QuestionsHeadersExchange:HandleOtherQuestionsQueue:Message"
+        }
+      }
+    },
+    "question:InputsFanoutExchange:Publisher": {
+      "servers": [
+        "development"
+      ],
+      "bindings": {
+        "amqp": {
+          "is": "routingKey",
+          "bindingVersion": "0.2.0",
+          "exchange": {
+            "type": "fanout",
+            "name": "InputsFanoutExchange",
+            "durable": false,
+            "autoDelete": false,
+            "vhost": "/vhost"
+          }
+        }
+      },
+      "publish": {
+        "message": {
+          "$ref": "#/components/messages/question:InputsFanoutExchange:Publisher:Message"
+        }
+      }
+    }
+  },
+  "components": {
+    "messages": {
+      "InputsQueue:InputsFanoutExchange:HandleInputsQueue:Message": {
+        "title": "InputsQueue:InputsFanoutExchange:HandleInputsQueue:Message",
+        "correlationId": {
+          "location": "$message.header#/correlation_id"
+        },
+        "payload": {
+          "$ref": "#/components/schemas/HandleInputsQueue:Message:Payload"
+        }
+      },
+      "CorpAppsQueue:AppsTopicExchange:HandleCorpAppsQueue:Message": {
+        "title": "CorpAppsQueue:AppsTopicExchange:HandleCorpAppsQueue:Message",
+        "correlationId": {
+          "location": "$message.header#/correlation_id"
+        },
+        "payload": {
+          "$ref": "#/components/schemas/CorporateRequest"
+        }
+      },
+      "IndAppsQueue:AppsTopicExchange:HandleIndAppsQueue:Message": {
+        "title": "IndAppsQueue:AppsTopicExchange:HandleIndAppsQueue:Message",
+        "correlationId": {
+          "location": "$message.header#/correlation_id"
+        },
+        "payload": {
+          "$ref": "#/components/schemas/PrivateRequest"
+        }
+      },
+      "DeliveryQueue:QuestionsHeadersExchange:HandleDeliveryQueue:Message": {
+        "title": "DeliveryQueue:QuestionsHeadersExchange:HandleDeliveryQueue:Message",
+        "correlationId": {
+          "location": "$message.header#/correlation_id"
+        },
+        "payload": {
+          "$ref": "#/components/schemas/QuestionRequest"
+        }
+      },
+      "PaymentQueue:QuestionsHeadersExchange:HandlePaymentQueue:Message": {
+        "title": "PaymentQueue:QuestionsHeadersExchange:HandlePaymentQueue:Message",
+        "correlationId": {
+          "location": "$message.header#/correlation_id"
+        },
+        "payload": {
+          "$ref": "#/components/schemas/QuestionRequest"
+        }
+      },
+      "OtherQuestionsQueue:QuestionsHeadersExchange:HandleOtherQuestionsQueue:Message": {
+        "title": "OtherQuestionsQueue:QuestionsHeadersExchange:HandleOtherQuestionsQueue:Message",
+        "correlationId": {
+          "location": "$message.header#/correlation_id"
+        },
+        "payload": {
+          "$ref": "#/components/schemas/QuestionRequest"
+        }
+      },
+      "question:InputsFanoutExchange:Publisher:Message": {
+        "title": "question:InputsFanoutExchange:Publisher:Message",
+        "correlationId": {
+          "location": "$message.header#/correlation_id"
+        },
+        "payload": {
+          "$ref": "#/components/schemas/question:InputsFanoutExchange:PublisherPayload"
+        }
+      }
+    },
+    "schemas": {
+      "CorporateRequest": {
+        "properties": {
+          "moment": {
+            "format": "date-time",
+            "title": "Moment",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "subject": {
+            "title": "Subject",
+            "type": "string"
+          },
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "inn": {
+            "title": "Inn",
+            "type": "string"
+          }
+        },
+        "required": [
+          "moment",
+          "name",
+          "subject",
+          "content",
+          "inn"
+        ],
+        "title": "CorporateRequest",
+        "type": "object"
+      },
+      "PrivateRequest": {
+        "properties": {
+          "moment": {
+            "format": "date-time",
+            "title": "Moment",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "subject": {
+            "title": "Subject",
+            "type": "string"
+          },
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "phone_number": {
+            "title": "Phone Number",
+            "type": "string"
+          },
+          "age": {
+            "title": "Age",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "moment",
+          "name",
+          "subject",
+          "content",
+          "phone_number",
+          "age"
+        ],
+        "title": "PrivateRequest",
+        "type": "object"
+      },
+      "QuestionRequest": {
+        "properties": {
+          "moment": {
+            "format": "date-time",
+            "title": "Moment",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "subject": {
+            "title": "Subject",
+            "type": "string"
+          },
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "priority": {
+            "title": "Priority",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "moment",
+          "name",
+          "subject",
+          "content",
+          "priority"
+        ],
+        "title": "QuestionRequest",
+        "type": "object"
+      },
+      "HandleInputsQueue:Message:Payload": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/CorporateRequest"
+          },
+          {
+            "$ref": "#/components/schemas/PrivateRequest"
+          },
+          {
+            "$ref": "#/components/schemas/QuestionRequest"
+          }
+        ],
+        "title": "HandleInputsQueue:Message:Payload"
+      },
+      "question:InputsFanoutExchange:PublisherPayload": {}
+    }
+  }
+}
