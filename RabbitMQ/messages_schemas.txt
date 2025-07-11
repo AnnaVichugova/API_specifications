@@ -1,0 +1,40 @@
+@startuml
+
+class Request {
+    +moment : datetime [required]
+    +name : string [required]
+    +subject : string [required]
+    +content : string [required]
+}
+
+note top of Request
+  Базовый класс обращения
+end note
+
+class CorporateRequest {
+    +inn : string [required]
+}
+note top of CorporateRequest
+  Корпоративная заявка на покупку
+end note
+
+class PrivateRequest {
+    +phone_number:  string [required]
+    +age: int [required]
+}
+note bottom of PrivateRequest
+  Частная заявка на покупку
+end note
+
+class QuestionRequest {
+    +priority: int [required]
+}
+note top of QuestionRequest
+  Обращение с вопросом
+end note
+
+Request <|-- CorporateRequest 
+Request <|-- PrivateRequest 
+Request <|-- QuestionRequest
+
+@enduml
