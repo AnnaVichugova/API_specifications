@@ -18,7 +18,6 @@ import json
 import random
 import time
 from datetime import datetime
-from faker.providers.address.ru_RU import Provider
 from dataclasses import dataclass, asdict
 from typing import Union, Any, Dict, Sequence, Literal
 from google.colab import userdata
@@ -75,6 +74,7 @@ class QuestionRequest(RequestData):
 corp = random.choice([1, 0])
 
 if corp == 1:
+    name = 'company_name'
     routing_keys = [f'app.company.{name}', 'question']
 else:
     routing_keys = ['app', 'question']
